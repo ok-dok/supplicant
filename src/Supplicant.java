@@ -72,11 +72,13 @@ public class Supplicant {
 
 	private static String LOCAL_IP = "";
 
-	private static String SERVICE_TYPE = "";
+	private static String SERVICE_TYPE = "internet";
 
-	private static String DHCP_SETTING = "";
+	private static String DHCP_SETTING = "0";
 
-	private static String CLIENT_VERSION = "";
+	private static String CLIENT_VERSION = "3.8.2";
+	
+	private static String IS_CHANGE = "true";
 
 	private static int index = 0x01000000;
 
@@ -93,12 +95,17 @@ public class Supplicant {
 	public static void main(String args[]) {
 
 		Supplicant supplicant = new Supplicant();
+		
 		String path = supplicant.getClass().getResource("/").getFile();
 		
 		try {
+			
 			configFile = URLDecoder.decode(path, "utf-8") + "config.properties";
+			
 		} catch (UnsupportedEncodingException e) {
+			
 			e.printStackTrace();
+			
 		}
 
 		for(int i=0; i<args.length; i++){
@@ -113,7 +120,7 @@ public class Supplicant {
 
 					System.out.println("Please give the config file path behind -c.");
 
-					System.exit(0);
+					return ;
 
 				}
 
@@ -121,15 +128,30 @@ public class Supplicant {
 
 		}
 
-		supplicant.loadData(args);
+		boolean flag = true;
+		
+		try {
+			
+			supplicant.loadData(args);
+			
+		} catch (Exception e) {
+			
+			System.out.println(e.getMessage());
 
-		supplicant.run();
+			flag = false;
+		}
+		
+		if(flag){
+			
+			supplicant.run();
+			
+		}
 
 	}
 
 
 
-	private void loadData(String[] args) {
+	private void loadData(String[] args) throws Exception {
 
 		Properties properties = new Properties();
 
@@ -141,16 +163,43 @@ public class Supplicant {
 
 			File file = new File(configFile);
 
-			if(!file.exists())
+			if(!file.exists()){
 
 				file.createNewFile();
+				
+				reader = new InputStreamReader(new FileInputStream(file),"utf-8");
+				
+				properties.load(reader);
+				
+				properties.setProperty("username", USERNAME);
 
+				properties.setProperty("password", PASSWORD);
+
+				properties.setProperty("server_ip", HOST_IP);
+
+				properties.setProperty("local_ip", LOCAL_IP);
+
+				properties.setProperty("mac_addr", MAC_ADDR);
+
+				properties.setProperty("service", SERVICE_TYPE);
+
+				properties.setProperty("dhcp", DHCP_SETTING);
+
+				properties.setProperty("client_version", CLIENT_VERSION);
+
+				properties.setProperty("is_change", IS_CHANGE);
+
+				writer = new OutputStreamWriter(new FileOutputStream(file),"utf-8");
+				
+				properties.store(writer, "Supplicant Config File");
+				
+			}else{
+				
+				reader = new InputStreamReader(new FileInputStream(file),"utf-8");
+				
+				properties.load(reader);
+			}
 			
-
-			reader = new InputStreamReader(new FileInputStream(file),"utf-8");
-
-			properties.load(reader);
-
 			USERNAME = properties.getProperty("username");
 
 			PASSWORD = properties.getProperty("password");
@@ -167,17 +216,13 @@ public class Supplicant {
 
 			CLIENT_VERSION = properties.getProperty("client_version");
 
-			String is_change = properties.getProperty("is_change");
+			IS_CHANGE = properties.getProperty("is_change");
 
-			
+			if(isNullOrBlank(IS_CHANGE) || !IS_CHANGE.equals("false")){
 
-			if(isNullOrBlank(is_change)){
-
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
-
-			
 
 			if(isNullOrBlank(USERNAME) || isNullOrBlank(PASSWORD)){
 
@@ -193,9 +238,7 @@ public class Supplicant {
 
 						if(isNullOrBlank(USERNAME)){
 
-							System.out.println("Failed to get username or password.");
-
-							System.exit(0);
+							throw new Exception("Failed to get username behind -u.");
 
 						}
 
@@ -207,9 +250,7 @@ public class Supplicant {
 
 						if(isNullOrBlank(PASSWORD)){
 
-							System.out.println("Failed to get username or password.");
-
-							System.exit(0);
+							throw new Exception("Failed to get password bihind -p.");
 
 						}
 
@@ -219,18 +260,14 @@ public class Supplicant {
 
 				if(isNullOrBlank(USERNAME) || isNullOrBlank(PASSWORD)){
 
-					System.out.println("Username or password connot be empty.");
-
-					System.exit(0);
+					throw new Exception("Username or password connot be empty.");
 
 				}
 
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
-
 			
-
 			if(isNullOrBlank(LOCAL_IP) || isNullOrBlank(MAC_ADDR)){
 
 				LOCAL_IP = "";
@@ -243,32 +280,35 @@ public class Supplicant {
 
 				} catch (SocketException e) {
 
-					System.out.println("Failed to get network card information.\n"
+					throw new Exception("Failed to get network card information.\n"
 
-							+ "Rerun the program to try again use -c to give a configuation file).\n"
+							+ "Rerun the program to try again or edit the config.properties "
 
-							+ "eg: java supplicant -c ~/supplicant.config");
-
-					System.exit(0);
+							+ "file to fill in the 'mac_addr' and 'local_ip' field.");
 
 				}
 
 				if(isNullOrBlank(LOCAL_IP) || isNullOrBlank(MAC_ADDR)){
 
-					System.out.println("Failed to get network card information.\n"
+					throw new Exception("Failed to get network card information.\n"
 
-							+ "Rerun the program to try again use -c to give a configuation file).\n"
+							+ "Rerun the program to try again or edit the config.properties "
 
-							+ "eg: java supplicant -c ~/supplicant.config");
-
-					System.exit(0);
+							+ "file to fill in the 'mac_addr' and 'local_ip' field.");
 
 				}
 
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
 
+			if(!checkNetwork()){
+				
+				throw new Exception("The network card is not available, "
+						
+						+ "please check whether the network card is disabled?");
+			}
+			
 			initUdpSocket();
 
 			if(isNullOrBlank(HOST_IP)){
@@ -277,7 +317,7 @@ public class Supplicant {
 
 				searchServerIp();
 
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
 
@@ -287,7 +327,7 @@ public class Supplicant {
 
 				searchService();
 
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
 
@@ -295,7 +335,7 @@ public class Supplicant {
 
 				DHCP_SETTING = "0";
 
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
 
@@ -303,11 +343,11 @@ public class Supplicant {
 
 				CLIENT_VERSION = "3.8.2";
 
-				is_change = "true";
+				IS_CHANGE = "true";
 
 			}
 
-			if(is_change.equals("true")){
+			if(IS_CHANGE.equals("true")){
 
 				properties.setProperty("username", USERNAME);
 
@@ -326,10 +366,10 @@ public class Supplicant {
 				properties.setProperty("client_version", CLIENT_VERSION);
 
 				properties.setProperty("is_change", "false");
-
+				
 				writer = new OutputStreamWriter(new FileOutputStream(file),"utf-8");
 
-				properties.store(writer, "Supplicant安朗小蝴蝶认证拨号客户端配置文件");	
+				properties.store(writer, "Supplicant Config File");	
 
 			}
 
@@ -345,13 +385,11 @@ public class Supplicant {
 
 			//System.out.println("Password:\t" + PASSWORD);
 
-			System.out.println("");
+			System.out.println();
 
 		} catch (IOException e) {
-
-			System.out.println("Failed to load the config file \"" + configFile + "\".");
-
-			System.exit(0);
+			
+			throw new Exception("Failed to load the config file \"" + configFile + "\".");
 
 		}finally{
 
@@ -362,8 +400,6 @@ public class Supplicant {
 					reader.close();
 
 				} catch (IOException e) {
-
-					// TODO 自动生成的 catch 块
 
 					e.printStackTrace();
 
@@ -379,8 +415,6 @@ public class Supplicant {
 
 				} catch (IOException e) {
 
-					// TODO 自动生成的 catch 块
-
 					e.printStackTrace();
 
 				}
@@ -388,8 +422,6 @@ public class Supplicant {
 			}
 
 		}
-
-		
 
 	}
 
@@ -1514,8 +1546,49 @@ public class Supplicant {
 
 	}
 
-	
+	/**
+	 * 检查网卡是否可用
+	 * @return 如果可用返回true，不可用则返回false
+	 */
+	private boolean checkNetwork(){
+		
+		try {
+			
+			Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
 
+			while (en.hasMoreElements()) {
+
+				NetworkInterface ni = en.nextElement();
+
+				byte[] bytes = ni.getHardwareAddress();
+				
+				String displayName = ni.getDisplayName();
+				
+				if(displayName.contains("Virtual") || displayName.contains("virtual"))
+
+					continue;
+
+				if (ni.isUp() && ni != null && bytes != null && bytes.length == 6) {
+
+					List<InterfaceAddress> list = ni.getInterfaceAddresses();
+					
+					if(!list.isEmpty()){
+						
+						return true;
+						
+					}
+					
+					System.out.println(list.get(0).getAddress().getHostAddress().toString());
+				}
+			}
+		} catch (SocketException e) {
+			
+			return false;
+			
+		}
+		
+		return false;
+	}
 	
 
 	/**
