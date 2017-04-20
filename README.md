@@ -3,7 +3,7 @@
 ### 使用说明：<br>
 1. 需要依赖java运行环境，jre或jdk1.7版本以上，同时配置环境变量，windows系统可直接安装exe安装包，无需手动配置环境变量，Linux或Mac请下载jdk，并配置环境变量，百度上教程很多，不会的就百度吧。这里附上jre下载地址：http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 2. 直接使用编译文件，bin/Supplicant.class文件，复制到任意目录中，打开命令行，进入到该目录。<br>
-	初次使用请执行 
+　初次使用请执行 
  ```
  java Supplicant -u 用户名 -p 密码
  ```
@@ -11,13 +11,13 @@
  ```
  java Supplicant 
  ```
- 即可进行拨号认证。<br>
+ 　即可进行拨号认证。<br>
 3. 自行编译，src/Supplicant.java文件，复制到任意目录中，打开命令行工具，进入该目录，<br>
 　执行 
  ```
  javac Supplicant.java 
  ```
- 进行编译，会生成 Supplicant.class文件，然后按照方式1进行操作。<br>
+　进行编译，会生成 Supplicant.class文件，然后按照方式1进行操作。<br>
 4. 使用-c参数可指定配置文件，但默认读取当前目录下的config.properties配置文件，如
  ```
  java Supplicant -c config.propties
