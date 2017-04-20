@@ -96,7 +96,7 @@ public class Supplicant {
 		String path = supplicant.getClass().getResource("/").getFile();
 		
 		try {
-			configFile = URLDecoder.decode(path, "utf-8") + "supplicant.config";
+			configFile = URLDecoder.decode(path, "utf-8") + "config.properties";
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
