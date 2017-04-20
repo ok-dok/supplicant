@@ -457,21 +457,17 @@ public class Supplicant {
 
 			try {
 
-				InetAddress iaddr = InetAddress.getByName(LOCAL_IP);
-
-				udpSocket = new DatagramSocket(3848,iaddr);
+				udpSocket = new DatagramSocket(3848);
 
 				udpSocket.setReuseAddress(true);
 
 				udpSocket.setSoTimeout(5000);
 
-			} catch (SocketException | UnknownHostException e) {
+			} catch (SocketException e) {
 
-				System.out.println("Failed to bind socket to ip:" + LOCAL_IP + ",port:3848.\n"
+				System.out.println("Failed to bind socket to port:3848.\n"
 
-						+ "Please check whether the port is being used(netstat -apn | grep 3848)"
-
-						+ " or check whether the network card is available?");
+						+ "Please check whether the port is being used(netstat -apn | grep 3848)?");
 
 				System.exit(0);
 
