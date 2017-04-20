@@ -17,8 +17,7 @@
 `不支持` PPPOE、Web认证
 
 ## 使用说明
-1. 需要依赖java运行环境，jre或jdk1.7版本以上，同时配置环境变量，windows系统可直接安装exe安装包，无需手动配置环境变量，Linux或Mac请下载jdk，并配置环境变量，百度上教程很多，不会的就百度吧。这里附上jre下载地址：http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
-<br>
+1. 需要依赖java运行环境，jre或jdk1.7版本以上，同时配置环境变量，windows系统可直接安装exe安装包，无需手动配置环境变量，Linux或Mac请下载jdk，并配置环境变量，百度上教程很多，不会的就百度吧。这里附上jre下载地址：http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html<br>
 2. 直接使用编译文件，bin/Supplicant.class文件，复制到任意目录中，打开命令行，进入到该目录。初次使用请使用 -u <用户名> -p <密码> 参数指定用户名密码，命令如下：
  ```
  java Supplicant -u 用户名 -p 密码
