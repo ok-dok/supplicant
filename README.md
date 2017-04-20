@@ -33,7 +33,7 @@
 　进行编译，会生成 Supplicant.class文件，然后按照2.所述进行操作。<br>
 4. 使用-c参数可指定配置文件，但默认读取当前目录下的config.properties配置文件，如
  ```
- java Supplicant -c config.propties
+ java Supplicant -c config.properties
  ```
 5. Ctrl + C 退出程序并下线
 
