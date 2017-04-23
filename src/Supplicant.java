@@ -67,7 +67,7 @@ public class Supplicant {
 	private static String DHCP_SETTING = "0";
 	private static String CLIENT_VERSION = "3.8.2";
 	private static String IS_CHANGE = "true";
-	private static String reconnect_enable = "true";
+	private static String RECONNECT_ENABLE = "true";
 	private static int index = 0x01000000;
 	private static byte[] block = { 0x2a, 0x06, 0, 0, 0, 0, 0x2b, 0x06, 0, 0, 0, 0, 0x2c, 0x06, 0, 0, 0, 0, 0x2d, 0x06,
 			0, 0, 0, 0, 0x2e, 0x06, 0, 0, 0, 0, 0x2f, 0x06, 0, 0, 0, 0 };
@@ -105,7 +105,7 @@ public class Supplicant {
 				int status = supplicant.run();
 				if (status == -1) {
 					// 断线重连标志为true且连接成功超过1次，则尝试进行重连
-					if (reconnect_enable.equals("true") && connectCnt > 0) {
+					if (RECONNECT_ENABLE.equals("true") && connectCnt > 0) {
 						if (++retryCnt <= 10) { // 10次重连机会
 							System.out.println("Connect to the " + SERVICE_TYPE + " failed. Try to reconnect("
 									+ retryCnt + ")...");
@@ -169,12 +169,14 @@ public class Supplicant {
 				properties.setProperty("dhcp", DHCP_SETTING);
 				properties.setProperty("client_version", CLIENT_VERSION);
 				properties.setProperty("is_change", IS_CHANGE);
+				properties.setProperty("reconnect_enable", RECONNECT_ENABLE);
 				writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
 				properties.store(writer, "Supplicant Config File");
 			} else {
 				reader = new InputStreamReader(new FileInputStream(file), "utf-8");
 				properties.load(reader);
 			}
+			
 			USERNAME = properties.getProperty("username");
 			PASSWORD = properties.getProperty("password");
 			HOST_IP = properties.getProperty("server_ip");
@@ -184,7 +186,13 @@ public class Supplicant {
 			DHCP_SETTING = properties.getProperty("dhcp");
 			CLIENT_VERSION = properties.getProperty("client_version");
 			IS_CHANGE = properties.getProperty("is_change");
+			RECONNECT_ENABLE = properties.getProperty("reconnect_enable");
+			
 			if (isNullOrBlank(IS_CHANGE) || !IS_CHANGE.equals("false")) {
+				IS_CHANGE = "true";
+			}
+			if(isNullOrBlank(RECONNECT_ENABLE) || !RECONNECT_ENABLE.equals("false")){
+				RECONNECT_ENABLE = "true";
 				IS_CHANGE = "true";
 			}
 			if (isNullOrBlank(USERNAME) || isNullOrBlank(PASSWORD)) {
@@ -259,6 +267,7 @@ public class Supplicant {
 				properties.setProperty("dhcp", DHCP_SETTING);
 				properties.setProperty("client_version", CLIENT_VERSION);
 				properties.setProperty("is_change", "false");
+				properties.setProperty("reconnect_enable", RECONNECT_ENABLE);
 				writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
 				properties.store(writer, "Supplicant Config File");
 			}
