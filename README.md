@@ -60,3 +60,4 @@ java Supplicant -u 用户名 -p 密码
 
 ## Bug Report
 Email: shawn_hou@163.com
+Email: 842328916@qq.com
