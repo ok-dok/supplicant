@@ -487,7 +487,7 @@ public class Supplicant {
      *
      */
     private byte[] generateBreathePacket(byte[] session) {
-        int packet_len = session.length + 18+60;
+        int packet_len = session.length + 18+70;
         byte[] packet = new byte[packet_len];
         byte i = -1;
         packet[++i] = 0x03;
@@ -588,8 +588,8 @@ public class Supplicant {
                 message = Arrays.copyOfRange(recvPacket, messageIndex + 2, messageIndex + 2 + messageLen);
                 String msg = new String(message, "gbk");
                 //从服务器返回的MESSAGE中判断
-                if (msg.trim().contains("密码错误")){
-                    clearWrongPassword();
+                if (msg.trim().contains("账户不存在")||msg.trim().contains("密码错误")){
+                    clearWrongAccout();
                 }
                 System.out.println(msg);
                 //登陆失败返回null
@@ -609,13 +609,13 @@ public class Supplicant {
 
     /**
      *
-     * 清除config文件中的错误密码
+     * 清除config文件中的错误用户名和密码
      * 本来打算从load方法里面改成每次都要读取参数的用户名和密码
      * 但会破坏了下次自动登录的功能
      * 所以还是直接删config里的吧
      *
      */
-    private void clearWrongPassword() {
+    private void clearWrongAccout() {
         Properties properties = new Properties();
         InputStreamReader reader = null;
         OutputStreamWriter writer = null;
@@ -623,6 +623,7 @@ public class Supplicant {
             File file = new File(configFile);
             reader = new InputStreamReader(new FileInputStream(file), "utf-8");
             properties.load(reader);
+            properties.setProperty("username", "");
             properties.setProperty("password", "");
             writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
             properties.store(writer, "Supplicant Config File");

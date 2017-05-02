@@ -59,5 +59,5 @@ java Supplicant -u 用户名 -p 密码
 注意：自动获取本地网卡信息会读取电脑有线网卡的mac、ip，拨号认证前，请将网卡设置为自动获取（适用于dhcp自动获取）,如果校园网不支持dhcp，请自行修改网卡ip地址、网关等信息。如果电脑存在多张有线物理网卡，导致无法正确获取网卡信息，请修改配置文件的mac_addr和local_ip两项内容。<br>
 
 ## Bug Report
-Email: shawn_hou@163.com
+Email: shawn_hou@163.com<br>
 Email: 842328916@qq.com
