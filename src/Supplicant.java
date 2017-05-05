@@ -1,34 +1,6 @@
 
-/**
- * Title: Supplicant.java
- * <p>
- * CopyRight: CopyRight © 52debug.cc
- *
- * @author Shawn_Hou
- * <p>
- * 2017年4月16日 下午9:31:11
- * <p>
- * Description: 安朗小蝴蝶拨号认证客户端 v1.0
- * <p>
- * Github地址：https://github.com/shawn-hou/supplicant
- * <p>
- * git clone https://github.com/shawn-hou/supplicant.git
- * <p>
- * Bug Report: shawn_hou@163.com
- */
-
-import java.io.File;
-
-import java.io.FileInputStream;
-
-import java.io.FileOutputStream;
-
 import java.io.IOException;
 
-import java.io.InputStreamReader;
-
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 
 import java.net.DatagramSocket;
@@ -40,7 +12,7 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 
 import java.net.SocketException;
-import java.net.URLDecoder;
+
 import java.net.UnknownHostException;
 
 import java.security.MessageDigest;
@@ -53,12 +25,8 @@ import java.util.Iterator;
 
 import java.util.List;
 
-import java.util.Properties;
-
 public class Supplicant {
 
-    //config.properties路径
-    private static String configFile = "";
     //用户名
     private static String USERNAME = "";
     //密码
@@ -75,39 +43,18 @@ public class Supplicant {
     private static String DHCP_SETTING = "0";
     //客户端版本号
     private static String CLIENT_VERSION = "3.8.2";
-    //配置文件是否发生改动，如手动改动了请将此项置为true
-    private static String IS_CHANGE = "true";
-    //是否允许断线重连，默认为true，重连次数为10
-    private static String RECONNECT_ENABLE = "true";
+
+    private static int connectCnt = 0; // 统计连接成功次数
 
     //协议里规定的
     private static int index = 0x01000000;
     private static byte[] block = {0x2a, 0x06, 0, 0, 0, 0, 0x2b, 0x06, 0, 0, 0, 0, 0x2c, 0x06, 0, 0, 0, 0, 0x2d, 0x06,
             0, 0, 0, 0, 0x2e, 0x06, 0, 0, 0, 0, 0x2f, 0x06, 0, 0, 0, 0};
-    private static int connectCnt = 0; // 统计连接成功次数
 
     private DatagramSocket udpSocket;
 
     public static void main(String args[]) {
         Supplicant supplicant = new Supplicant();
-        try {
-            configFile = URLDecoder.decode(System.getProperty("user.dir"), "utf-8")
-                    + File.separator + "config.properties";
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        for (int i = 0; i < args.length; i++) {
-            //判断是否给出自定义config.properties的路径
-            if (args[i].equals("-c")) {
-                if (args[i + 1] != null && !args[i + 1].isEmpty()) {
-                    configFile = args[i + 1];
-                } else {
-                    System.out.println("请在关键字 -c 的后面给出config.properties的路径。");
-                    return;
-                }
-            }
-        }
         //已经获取配置文件路径的flag
         boolean flag = true;
         try {
@@ -122,16 +69,12 @@ public class Supplicant {
                 // -2:连接超时，出错； -1:未上线；0:掉线; 1:在线
                 int status = supplicant.run();
                 if (status == -1) {
-                    // 断线重连标志为true且连接成功超过1次，则尝试进行重连
-                    if (RECONNECT_ENABLE.equals("true") && connectCnt > 0) {
-                        if (++retryCnt <= 10) { // 10次重连机会
-                            System.out.println("连接到 " + SERVICE_TYPE + " 失败。 尝试重新连接(第"
-                                    + retryCnt + "次)...");
-                        } else {
-                            System.out.println("重新连接失败 " + (retryCnt - 1) + " 次, 请稍后再试。");
-                            break;
-                        }
+                    // 5次重连机会
+                    if (++retryCnt <= 5) {
+                        System.out.println("连接到 " + SERVICE_TYPE + " 失败。 尝试重新连接(第"
+                                + retryCnt + "次)...");
                     } else {
+                        System.out.println("重新连接失败 " + (retryCnt - 1) + " 次, 请稍后再试。");
                         break;
                     }
                 } else if (status == 0) {
@@ -165,152 +108,54 @@ public class Supplicant {
     }
 
     private void loadData(String[] args) throws Exception {
-        Properties properties = new Properties();
-        InputStreamReader reader = null;
-        OutputStreamWriter writer = null;
-        try {
-            File file = new File(configFile);
-            if (!file.exists()) {
-                file.createNewFile();
-                properties.setProperty("username", USERNAME);
-                properties.setProperty("password", PASSWORD);
-                properties.setProperty("server_ip", HOST_IP);
-                properties.setProperty("local_ip", LOCAL_IP);
-                properties.setProperty("mac_addr", MAC_ADDR);
-                properties.setProperty("service", SERVICE_TYPE);
-                properties.setProperty("dhcp", DHCP_SETTING);
-                properties.setProperty("client_version", CLIENT_VERSION);
-                properties.setProperty("is_change", IS_CHANGE);
-                properties.setProperty("reconnect_enable", RECONNECT_ENABLE);
-                writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
-                properties.store(writer, "Supplicant Config File");
-            } else {
-                reader = new InputStreamReader(new FileInputStream(file), "utf-8");
-                properties.load(reader);
-            }
-
-            USERNAME = properties.getProperty("username");
-            PASSWORD = properties.getProperty("password");
-            HOST_IP = properties.getProperty("server_ip");
-            LOCAL_IP = properties.getProperty("local_ip");
-            MAC_ADDR = properties.getProperty("mac_addr");
-            SERVICE_TYPE = properties.getProperty("service");
-            DHCP_SETTING = properties.getProperty("dhcp");
-            CLIENT_VERSION = properties.getProperty("client_version");
-            IS_CHANGE = properties.getProperty("is_change");
-            RECONNECT_ENABLE = properties.getProperty("reconnect_enable");
-
-            //初始化配置文件
-            if (isNullOrBlank(IS_CHANGE) || !IS_CHANGE.equals("false")) {
-                IS_CHANGE = "true";
-            }
-            if (isNullOrBlank(RECONNECT_ENABLE) || !RECONNECT_ENABLE.equals("false")) {
-                RECONNECT_ENABLE = "true";
-                IS_CHANGE = "true";
-            }
-
-            if (isNullOrBlank(USERNAME) || isNullOrBlank(PASSWORD)) {
-                USERNAME = "";
-                PASSWORD = "";
-                //从参数中获取用户名和密码
-                for (int i = 0; i < args.length; i++) {
-                    if (args[i].equals("-u")) {
-                        USERNAME = args[i + 1].trim();
-                        if (isNullOrBlank(USERNAME)) {
-                            throw new Exception("请在关键字 -u 后面输入用户名。");
-                        }
-                    }
-                    if (args[i].equals("-p")) {
-                        PASSWORD = args[i + 1].trim();
-                        if (isNullOrBlank(PASSWORD)) {
-                            throw new Exception("请在关键字 -p 后面输入密码。");
-                        }
-                    }
-                }
-                if (isNullOrBlank(USERNAME) || isNullOrBlank(PASSWORD)) {
-                    throw new Exception("用户名和密码都不能为空。");
-                }
-                IS_CHANGE = "true";
-            }
-            if (isNullOrBlank(LOCAL_IP) || isNullOrBlank(MAC_ADDR)) {
-                LOCAL_IP = "";
-                MAC_ADDR = "";
-                try {
-                    autoGetMacIp();
-                } catch (SocketException e) {
-                    throw new Exception("获取物理地址和IP地址失败。\n"
-                            + "请重新运行程序或者手动修改config.properties里的mac_addr和local_ip。 "
-                    );
-                }
-                if (isNullOrBlank(LOCAL_IP) || isNullOrBlank(MAC_ADDR)) {
-                    throw new Exception("获取物理地址和IP地址失败。\n"
-                            + "请重新运行程序或者手动修改config.properties里的mac_addr和local_ip。 "
-                    );
-                }
-                IS_CHANGE = "true";
-            }
-            if (!checkNetwork()) {
-                throw new Exception(
-                        "网卡不可用，请检查网卡是否被禁用?");
-            }
-            initUdpSocket();
-            if (isNullOrBlank(HOST_IP)) {
-                HOST_IP = "";
-                searchServerIp();
-                IS_CHANGE = "true";
-            }
-            if (isNullOrBlank(SERVICE_TYPE)) {
-                SERVICE_TYPE = "";
-                searchService();
-                IS_CHANGE = "true";
-            }
-            if (isNullOrBlank(DHCP_SETTING)) {
-                DHCP_SETTING = "0";
-                IS_CHANGE = "true";
-            }
-            if (isNullOrBlank(CLIENT_VERSION)) {
-                CLIENT_VERSION = "3.8.2";
-                IS_CHANGE = "true";
-            }
-            if (IS_CHANGE.equals("true")) {
-                properties.setProperty("username", USERNAME);
-                properties.setProperty("password", PASSWORD);
-                properties.setProperty("server_ip", HOST_IP);
-                properties.setProperty("local_ip", LOCAL_IP);
-                properties.setProperty("mac_addr", MAC_ADDR);
-                properties.setProperty("service", SERVICE_TYPE);
-                properties.setProperty("dhcp", DHCP_SETTING);
-                properties.setProperty("client_version", CLIENT_VERSION);
-                properties.setProperty("is_change", "false");
-                properties.setProperty("reconnect_enable", RECONNECT_ENABLE);
-                writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
-                properties.store(writer, "Supplicant Config File");
-            }
-            System.out.println("Service :\t" + SERVICE_TYPE);
-            System.out.println("Server IP:\t" + HOST_IP);
-            System.out.println("Local IP:\t" + LOCAL_IP);
-            System.out.println("Mac Addr:\t" + MAC_ADDR);
-            System.out.println("Username:\t" + USERNAME);
-            // System.out.println("Password:\t" + PASSWORD);
-            System.out.println();
-        } catch (IOException e) {
-            throw new Exception("写入配置文件失败 \"" + configFile + "\".");
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+        //从参数中获取用户名和密码
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equals("-u")) {
+                USERNAME = args[i + 1].trim();
+                if (isNullOrBlank(USERNAME)) {
+                    throw new Exception("请在关键字 -u 后面输入用户名。");
                 }
             }
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            if (args[i].equals("-p")) {
+                PASSWORD = args[i + 1].trim();
+                if (isNullOrBlank(PASSWORD)) {
+                    throw new Exception("请在关键字 -p 后面输入密码。");
                 }
             }
         }
+        if (isNullOrBlank(USERNAME) || isNullOrBlank(PASSWORD)) {
+            throw new Exception("用户名和密码都不能为空。");
+        }
+        //获取物理地址和IP地址
+        try {
+            autoGetMacIp();
+        } catch (SocketException e) {
+            throw new Exception("获取物理地址和IP地址失败。\n"
+                    + "请重新运行程序或者手动修改config.properties里的mac_addr和local_ip。 "
+            );
+        }
+        if (isNullOrBlank(LOCAL_IP) || isNullOrBlank(MAC_ADDR)) {
+            throw new Exception("获取物理地址和IP地址失败。\n"
+                    + "请重新运行程序或者手动修改config.properties里的mac_addr和local_ip。 "
+            );
+        }
+        if (!checkNetwork()) {
+            throw new Exception(
+                    "网卡不可用，请检查网卡是否被禁用?");
+        }
+        //初始化
+        initUdpSocket();
+        //获取认证服务器的IP
+        searchServerIp();
+        //获取认证服务类型
+        searchService();
+        //打印到控制台
+        System.out.println("Service :\t" + SERVICE_TYPE);
+        System.out.println("Server IP:\t" + HOST_IP);
+        System.out.println("Local IP:\t" + LOCAL_IP);
+        System.out.println("Mac Addr:\t" + MAC_ADDR);
+        System.out.println("Username:\t" + USERNAME);
+        // System.out.println("Password:\t" + PASSWORD);
     }
 
     /**
@@ -587,10 +432,7 @@ public class Supplicant {
                 byte[] message = new byte[messageLen];
                 message = Arrays.copyOfRange(recvPacket, messageIndex + 2, messageIndex + 2 + messageLen);
                 String msg = new String(message, "gbk");
-                //从服务器返回的MESSAGE中判断
-                if (msg.trim().contains("账户不存在")||msg.trim().contains("密码错误")){
-                    clearWrongAccout();
-                }
+                //打印从服务器返回的MESSAGE
                 System.out.println(msg);
                 //登陆失败返回null
                 if (status == 0)
@@ -605,46 +447,6 @@ public class Supplicant {
             System.out.println("连接到" + SERVICE_TYPE + "失败: " + e.getMessage() + "。");
         }
         return null;
-    }
-
-    /**
-     *
-     * 清除config文件中的错误用户名和密码
-     * 本来打算从load方法里面改成每次都要读取参数的用户名和密码
-     * 但会破坏了下次自动登录的功能
-     * 所以还是直接删config里的吧
-     *
-     */
-    private void clearWrongAccout() {
-        Properties properties = new Properties();
-        InputStreamReader reader = null;
-        OutputStreamWriter writer = null;
-        try {
-            File file = new File(configFile);
-            reader = new InputStreamReader(new FileInputStream(file), "utf-8");
-            properties.load(reader);
-            properties.setProperty("username", "");
-            properties.setProperty("password", "");
-            writer = new OutputStreamWriter(new FileOutputStream(file), "utf-8");
-            properties.store(writer, "Supplicant Config File");
-        } catch (IOException e) {
-            System.out.println("写入配置文件失败 \"" + configFile + "\".");
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 
     /**
