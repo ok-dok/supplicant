@@ -114,9 +114,9 @@ public class Supplicant {
 	 */
 	public boolean consoleRead = false;	
 	/**
-	 * 连接状态： -1:连接认证出错； 0:(不在线)连接超时，md5校验出错； 1:在线
+	 * 连接状态
 	 */
-	public byte status = 0;
+	public Status status = Status.LOGOUT;
 	/**
 	 * 统计重连次数，当RECONNECT_ENABLE = "true"时有效
 	 */
@@ -129,6 +129,41 @@ public class Supplicant {
 	private static byte[] block = { 0x2a, 0x06, 0, 0, 0, 0, 0x2b, 0x06, 0, 0, 0, 0, 0x2c, 0x06, 0, 0, 0, 0, 0x2d, 0x06,
 			0, 0, 0, 0, 0x2e, 0x06, 0, 0, 0, 0, 0x2f, 0x06, 0, 0, 0, 0 };
 	private DatagramSocket udpSocket;
+	
+	private enum Status{
+		/**
+		 * 认证错误
+		 */
+		LOGIN_ERROR,
+		/**
+		 * 认证超时
+		 */
+		LOGIN_TIMEOUT,
+		/**
+		 * 认证MD5校验失败
+		 */
+		LOGIN_MD5ERROR,
+		/**
+		 * 在线
+		 */
+		ONLINE,
+		/**
+		 * 下线
+		 */
+		LOGOUT,
+		/**
+		 * 保持呼吸超时
+		 */
+		BREATHE_TIMEOUT,
+		/**
+		 * 保持呼吸MD5出错
+		 */
+		BREATHE_MD5ERROR, 
+		/**
+		 * 保持呼吸出错
+		 */
+		BREATHE_ERROR
+	}
 
 	public static void main(String args[]) {
 		Supplicant supplicant = new Supplicant();
@@ -160,11 +195,29 @@ public class Supplicant {
 			System.out.println(e.getMessage());
 			System.exit(0);
 		}		
-		retryCnt = 0; // 统计重连次数
-		while (true) {
+		boolean flag = true;
+		while (flag) {
 			connect();
-			if (status == 0) {	//连接超时，md5校验出错
-				// 断线重连标志为true，则尝试进行重连
+			switch(this.status){
+			case LOGIN_ERROR: flag = false;
+				break;
+			case LOGIN_MD5ERROR:
+			case LOGIN_TIMEOUT:
+				if (RECONNECT_ENABLE.equals("true")) {
+					if (++retryCnt <= retryMax) { // 5次重连机会
+						System.out.println("连接超时，重新进行连接认证...");
+					} else {
+						System.out.println("认证失败：连接超时，请稍后再试！");
+						break;
+					}
+				} else {
+					break;
+				}
+				break;
+			case BREATHE_MD5ERROR:
+			case BREATHE_ERROR:
+			case BREATHE_TIMEOUT:
+			case LOGOUT:
 				if (RECONNECT_ENABLE.equals("true")) {
 					if (++retryCnt <= retryMax) { // 5次重连机会
 						System.out.println("保持连接失败！ 重新进行连接认证...");
@@ -175,9 +228,11 @@ public class Supplicant {
 				} else {
 					break;
 				}
-			} else if (status == -1) {
+				break;
+			default:
 				break;
 			}
+			
 		}
 		closeUdpSocket();
 	}
@@ -266,8 +321,10 @@ public class Supplicant {
 			if (file.exists()) {	//如果存在配置文件，则读取相关配置信息
 				reader = new InputStreamReader(new FileInputStream(file), "utf-8");
 				properties.load(reader);
-				USERNAME = properties.getProperty("username");
-				PASSWORD = properties.getProperty("password");
+				if(isNullOrBlank(USERNAME))
+					USERNAME = properties.getProperty("username");
+				if(isNullOrBlank(PASSWORD))
+					PASSWORD = properties.getProperty("password");
 				HOST_IP = properties.getProperty("server_ip");
 				LOCAL_IP = properties.getProperty("local_ip");
 				MAC_ADDR = properties.getProperty("mac_addr");
@@ -437,19 +494,26 @@ public class Supplicant {
 	 * 连接到internet，线程阻塞。当连接出错或超时，即status=-1或0时，方法执行结束
 	 */
 	public void connect() {
-		status = 0; // -1:连接认证出错； 0:(不在线)连接超时，md5校验出错; 1:在线
+		status = Status.LOGOUT;
 		index = 0x01000000;
 		byte[] packet = generateLoginPacket();
-		byte[] session = login(packet);	//认证成功 status=1,同时返回session,出错status=-1，超时或者md5校验出错，status=0
-		if (session != null) {	//认证成功，status=1
-			System.out.println("您已连接到" + SERVICE_TYPE + "。保持连接，请不要关闭此程序！");
+		/**
+		 * 认证成功 status=ONLINE,同时返回session；
+		 * 认证出错 status=LOGIN_ERROR；
+		 * 认证超时 status=LOGIN_TIMEOUT
+		 * md5校验出错 status=LOGIN_MD5ERROR
+		 */
+		byte[] session = login(packet);	
+		if (session != null) {
+			retryCnt = 0;	//每次连接成功以后重连次数重置为0
+			System.out.println("您已连接到" + SERVICE_TYPE + "。请保持连接...");
 			if(isChange){	//配置信息发生改动
 				saveData(); 	//保存配置信息到配置文件
 				isChange = false;
 			}
 			try {
-				breathe(session); 	//阻塞，只有当保持连接失败时，才会执行下面的操作，失败时，status值为 0 或 -1
-				if (status == 0) { 	// 保持在线失败，请求下线
+				breathe(session); 	//阻塞，只有当保持连接失败时，才会执行下面的操作，失败时，status值为BREATHE_ERROR或者BREATHE_TIMEOUT
+				if (status != Status.ONLINE) { 	// 保持在线失败，请求下线
 					logout(session);
 				}
 			} catch (InterruptedException e) {
@@ -507,19 +571,19 @@ public class Supplicant {
 					System.out.println("\n" + msg + "\n");
 				}
 				if (status == 0){
-					this.status = -1;	//状态置为-1，连接认证出错
+					this.status = Status.LOGIN_ERROR;	//连接认证出错
 				}
 				else{
-					this.status = 1;	//连接状态为1,在线
+					this.status = Status.ONLINE;	//连接状态为在线
 					return session;
 				}
 			} else {
 				//System.out.println("连接到" + SERVICE_TYPE + "失败！尝试重新进行连接认证...");
-				this.status = 0;	//md5校验出错，连接状态置为0
+				this.status = Status.LOGIN_MD5ERROR;	//md5校验出错
 			}
 		} catch (IOException e) {
 			//System.out.println("连接到" + SERVICE_TYPE + "失败，服务器无响应，请稍后再试！");
-			this.status = 0;	//连接超时，连接状态置为0
+			this.status = Status.LOGIN_TIMEOUT;	//连接超时
 		}
 		return null;
 	}
@@ -535,7 +599,8 @@ public class Supplicant {
 		try {
 			address = InetAddress.getByName(HOST_IP);
 		} catch (UnknownHostException e) {
-			e.printStackTrace();
+			System.out.println(e.getMessage());
+			System.exit(0);
 		}
 		DatagramPacket datagramPacket = new DatagramPacket(downnetPacket, downnetPacket.length, address, 3848);
 		try {
@@ -543,6 +608,7 @@ public class Supplicant {
 			byte[] buffer = new byte[4096];
 			DatagramPacket dp = new DatagramPacket(buffer, 0, buffer.length);
 			udpSocket.receive(dp);
+			this.status = Status.LOGOUT;	//下线
 		} catch (IOException e) {
 			// e.printStackTrace();
 		}
@@ -633,9 +699,15 @@ public class Supplicant {
 					recvPacket[j] = 0;
 				}
 				if (checkMD5(recvMd5, getMD5Bytes(recvPacket))) {
-					status = recvPacket[20];
+					byte status = recvPacket[20];
+					if(status == 1){
+						this.status = Status.ONLINE;
+					}else{
+						this.status = Status.BREATHE_ERROR;	//保持呼吸出错
+						break;
+					}
 				} else {
-					status = 0; //md5校验出错，连接状态置为0
+					status = Status.BREATHE_MD5ERROR; //md5校验出错
 				}
 			} catch (IOException e) {
 				timeoutCnt++;
@@ -643,13 +715,10 @@ public class Supplicant {
 					//System.out.println("服务器失去响应: " + e.getMessage() + "。 " + "重新发送连接请求(第" + timeoutCnt + "次)...");
 					continue;
 				} else {
-					System.out.println("请求超时，服务器失去响应，您已断开连接！");
-					status = -1; // 连接出错，下线
+					//System.out.println("请求超时，服务器失去响应，您已断开连接！");
+					this.status = Status.BREATHE_TIMEOUT; // 保持连接超时，失去响应
+					break;
 				}
-			}
-			//如果状态不为1(在线)，则退出循环
-			if(status != 1){
-				break;
 			}
 			index += 3;
 			Thread.sleep(20000);
