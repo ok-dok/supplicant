@@ -26,7 +26,7 @@
  ```
  你也可以请使用 -u <账户> -p <密码> 参数指定用户名密码，命令如下：
  ```
- java Supplicant -u 用户名 -p 密码
+ java Supplicant -u 账户 -p 密码
  ```
 　初次拨号认证通过后，再次使用时无需再次指定用户名密码，直接使用如下命令即可进行认证。
 
@@ -35,7 +35,7 @@
  javac Supplicant.java 
  ```
 　进行编译，会生成 两个.class文件，然后按照2.所述进行操作。<br>
-4. 使用-c参数可指定配置文件，但默认读取当前目录下的config.properties配置文件，如
+4. 使用'-c'参数可指定配置文件，但默认读取当前目录下的config.properties配置文件，如
  ```
  java Supplicant -c config.properties
  ```
@@ -59,7 +59,7 @@ display_message=true			#是否允许打印服务器通知信息，true为允许�
 ```
 java Supplicant -u 用户名 -p 密码 
 ```
-或者执行下面命令(使用-i参数)进行手动输入配置信息：
+或者执行下面命令(使用'-i'参数)进行手动输入配置信息：
 ```
 java Supplicant -i
 ```
