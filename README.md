@@ -1,12 +1,12 @@
-# 安朗（小蝴蝶）拨号认证客户端Java版
+# 安朗（小蝴蝶）拨号认证客户端Java版（V2.0）
 ## 支持院校
 #### 测试通过
 1. 烟台大学赛尔网
+2. 广州大学华软软件学院
 
 #### 待测试
 1. 广州城建学院
 2. 辽东学院
-3. 广州大学华软软件学院
 
 ## 运行环境
 - Windows 7/8/10
@@ -19,19 +19,22 @@
 
 ## 使用说明
 1. 需要依赖java运行环境，jre或jdk1.7版本以上，同时配置环境变量，windows系统可直接安装exe安装包，无需手动配置环境变量，Linux或Mac请下载jdk，并配置环境变量，百度上教程很多，不会的就百度吧。这里附上jre下载地址：http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html<br>
-2. 直接使用编译文件，bin/Supplicant.class文件，复制到任意目录中，打开命令行，进入到该目录。初次使用请使用 -u <用户名> -p <密码> 参数指定用户名密码，命令如下：
+2. 直接使用编译文件，复制bin/目录下的两个.class文件到任意目录中，打开命令行，进入到该目录。<br>
+　初次运行需要输入账户和密码，直接执行下面命令会提示输入账户、密码（只有第一次运行需要输入，**密码输入时是看不到的哦**）：
+ ```
+ java Supplicant 
+ ```
+ 你也可以请使用 -u <账户> -p <密码> 参数指定用户名密码，命令如下：
  ```
  java Supplicant -u 用户名 -p 密码
  ```
 　初次拨号认证通过后，再次使用时无需再次指定用户名密码，直接使用如下命令即可进行认证。
- ```
- java Supplicant 
- ```
+
 3. 自行编译，src/Supplicant.java文件，复制到任意目录中，打开命令行工具，进入该目录，执行 
  ```
  javac Supplicant.java 
  ```
-　进行编译，会生成 Supplicant.class文件，然后按照2.所述进行操作。<br>
+　进行编译，会生成 两个.class文件，然后按照2.所述进行操作。<br>
 4. 使用-c参数可指定配置文件，但默认读取当前目录下的config.properties配置文件，如
  ```
  java Supplicant -c config.properties
@@ -65,3 +68,7 @@ java Supplicant -i
 
 ## Bug Report
 Email: shawn_hou@163.com
+
+## 特别感谢
+感谢 [xingrz](https://github.com/xingrz/swiftz-protocal "xingrz/swiftz-protocal") 提供的协议。
+感谢 [HinsYang](https://github.com/HinsYang "HinsYang's GitHub") 提交的bug。
