@@ -208,10 +208,10 @@ public class Supplicant {
 						System.out.println("连接超时，重新进行连接认证...");
 					} else {
 						System.out.println("认证失败：连接超时，请稍后再试！");
-						break;
+						flag = false;
 					}
 				} else {
-					break;
+					flag = false;
 				}
 				break;
 			case BREATHE_MD5ERROR:
@@ -223,10 +223,10 @@ public class Supplicant {
 						System.out.println("保持连接失败！ 重新进行连接认证...");
 					} else {
 						System.out.println("连接认证失败，请稍后再试！");
-						break;
+						flag = false;
 					}
 				} else {
-					break;
+					flag = false;
 				}
 				break;
 			default:
@@ -471,6 +471,12 @@ public class Supplicant {
 				throw new Exception("网卡不可用，请检查网卡是否被禁用?");
 			}
 			try {
+				/**
+				 * 这里不绑定端口一样能够进行拨号。
+				 * 绑定端口是为了防止多个拨号软件同时进行拨号。
+				 * 但不绑定端口貌似可以实现多个客户端同时拨不同账号？
+				 */
+				//udpSocket = new DatagramSocket();
 				udpSocket = new DatagramSocket(3848);
 				udpSocket.setReuseAddress(true);
 				udpSocket.setSoTimeout(5000);
