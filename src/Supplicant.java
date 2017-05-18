@@ -541,6 +541,10 @@ public class Supplicant {
 			byte[] buffer = new byte[4096];
 			DatagramPacket dp = new DatagramPacket(buffer, 0, buffer.length);
 			udpSocket.receive(dp);
+			//这里对数据报发送方ip做一个校验，排除非服务器ip向本地端口发送数据，但这并不能防止udp伪造ip
+			while(!checkRemoteAddress(dp.getAddress())){
+				udpSocket.receive(dp);
+			}
 			int bufferSize = dp.getLength();
 			byte[] recvPacket = decrypt(Arrays.copyOf(buffer, bufferSize));
 			byte[] recvMd5 = new byte[16];
@@ -691,6 +695,10 @@ public class Supplicant {
 				byte[] buffer = new byte[4096];
 				DatagramPacket dp = new DatagramPacket(buffer, 0, buffer.length);
 				udpSocket.receive(dp);
+				//这里对数据报发送方ip做一个校验，排除非服务器ip向本地端口发送数据，但这并不能防止udp伪造ip
+				while(!checkRemoteAddress(dp.getAddress())){
+					udpSocket.receive(dp);
+				}
 				int bufferSize = dp.getLength();
 				byte[] recvPacket = decrypt(Arrays.copyOf(buffer, bufferSize));
 				byte[] recvMd5 = new byte[16];
@@ -876,6 +884,10 @@ public class Supplicant {
 			byte[] buffer = new byte[1024];
 			DatagramPacket dp = new DatagramPacket(buffer, 0, buffer.length);
 			udpSocket.receive(dp);
+			//这里对数据报发送方ip做一个校验，排除非服务器ip向本地端口发送数据，但这并不能防止udp伪造ip
+			while(!checkRemoteAddress(dp.getAddress())){
+				udpSocket.receive(dp);
+			}
 			int bufferSize = dp.getLength();
 			byte[] recvPacket = decrypt(Arrays.copyOf(buffer, bufferSize));
 			byte[] recvMd5 = new byte[16];
@@ -963,6 +975,13 @@ public class Supplicant {
 			byte[] buffer = new byte[1024];
 			DatagramPacket dp = new DatagramPacket(buffer, 0, buffer.length);
 			udpSocket.receive(dp);
+			//这里对数据报发送方ip做一个校验，排除非服务器ip向本地端口发送数据，但这并不能防止udp伪造ip
+			while(true){
+				if(dp.getAddress().getHostName().equals("1.1.1.8")){
+					break;
+				}
+				udpSocket.receive(dp);
+			}
 			int bufferSize = dp.getLength();
 			byte[] recvPacket = decrypt(Arrays.copyOf(buffer, bufferSize));
 			// print(recvPacket);
@@ -1048,6 +1067,18 @@ public class Supplicant {
 	}
 
 	/**
+	 * 校验发送方ip是否为服务器ip
+	 * @param ia
+	 * @return
+	 */
+	private boolean checkRemoteAddress(InetAddress ia){
+		String ip = ia.getHostName();
+		if(ip.equals(HOST_IP))
+			return true;
+		return false;
+	}
+	
+	/**
 	 * 自动获取mac、ip地址
 	 * @throws SocketException
 	 */
@@ -1077,10 +1108,10 @@ public class Supplicant {
 				Iterator<InterfaceAddress> it = list.iterator();
 				while (it.hasNext()) {
 					InterfaceAddress ia = it.next();
-					String ip = ia.getAddress().toString().split("/")[1];
+					String ip = ia.getAddress().getHostName();
 					if (ip.length() < 16) {
 						LOCAL_IP = ip;
-						// System.out.println(ip);
+						//System.out.println(ip);
 					}
 				}
 			}
