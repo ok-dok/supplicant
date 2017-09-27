@@ -268,18 +268,34 @@ public class Supplicant {
 		LOCAL_IP = in.nextLine().trim();
 		System.out.print("物理网卡地址: ");
 		MAC_ADDR = in.nextLine().trim();
+		System.out.print("服务类型：");
+		SERVICE_TYPE = in.nextLine().trim();
+		System.out.print("服务器ip地址：");
+		HOST_IP = in.nextLine().trim();
+		System.out.print("是否支持dhcp？(y/[n])");
+		String line = in.nextLine();
+		if (isNullOrBlank(line) || line.charAt(0) == 'y' || line.charAt(0) == 'Y') {
+			DHCP_SETTING = "1";
+		} else {
+			DHCP_SETTING = "0";
+		}
+		System.out.print("小蝴蝶版本号：([3.8.2])");
+		line = in.next().trim();
+		if (isNullOrBlank(line)) {
+			CLIENT_VERSION = "3.8.2";
+		} else {
+			CLIENT_VERSION = line;
+		}
 		System.out.print("账户: ");
 		USERNAME = in.nextLine().trim();
 		System.out.print("密码: ");
 		Console console = System.console();
 		PASSWORD = new String(console.readPassword());
 		initUdpSocket(); // 初始化udp Socket
-		searchServerIp(); // 查找服务器ip地址
-		searchService(); // 查找服务
-		DHCP_SETTING = "0";
-		CLIENT_VERSION = "3.8.2";
+		// searchServerIp(); // 查找服务器ip地址
+		// searchService(); // 查找服务
 		System.out.print("是否允许断线重连？([y]/n)");
-		String line = in.nextLine();
+		line = in.nextLine();
 		if (isNullOrBlank(line) || line.charAt(0) == 'y' || line.charAt(0) == 'Y')
 			RECONNECT_ENABLE = "true";
 		else
@@ -372,9 +388,9 @@ public class Supplicant {
 			}
 			System.out.println("-----------------------------------");
 			System.out.println("  服务类型:    \t" + SERVICE_TYPE);
-			System.out.println("  认证ip地址:  \t" + LOCAL_IP);
-			System.out.println("  服务器ip地址:\t" + HOST_IP);
+			System.out.println("  本地ip地址:  \t" + LOCAL_IP);
 			System.out.println("  物理网卡地址:\t" + MAC_ADDR);
+			System.out.println("  服务器ip地址:\t" + HOST_IP);
 			System.out.println("  账户:      \t" + USERNAME);
 			System.out.println("-----------------------------------");
 		} catch (IOException e) {
@@ -912,15 +928,12 @@ public class Supplicant {
 				// 取出服务内容
 				if (serviceIndex != -1) {
 					int serviceLen = recvPacket[serviceIndex + 1];
-					if (serviceIndex + 2 >= recvPacket.length) {
-						return;
-					}
 					SERVICE_TYPE = "";
 					for (int j = serviceIndex + 2; j < serviceIndex + serviceLen; j++) {
 						SERVICE_TYPE += (char) (recvPacket[j] & 0xff);
 					}
 					if (isNullOrBlank(SERVICE_TYPE)) {
-						SERVICE_TYPE = "int";
+						SERVICE_TYPE = "internet";
 					}
 				} else {
 					System.out.println("搜索服务失败！正在重试...");
