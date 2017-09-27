@@ -160,6 +160,10 @@ public class Supplicant {
 				supplicant.readDataFromProperties();
 				// 从配置文件读入配置信息，如果配置文件信息为空，则通过控制台读入
 			}
+			if (isChange) { // 配置信息发生改动
+				supplicant.saveData(); // 保存配置信息到配置文件
+				isChange = false;
+			}
 		} catch (Exception e) { // 读取配置信息出错，退出程序
 			System.out.println(e.getMessage());
 			System.exit(0);
@@ -508,10 +512,6 @@ public class Supplicant {
 		if (session != null) {
 			retryCnt = 0; // 每次连接成功以后重连次数重置为0
 			System.out.println("您已连接到" + SERVICE_TYPE + "。请保持连接...");
-			if (isChange) { // 配置信息发生改动
-				saveData(); // 保存配置信息到配置文件
-				isChange = false;
-			}
 			try {
 				breathe(session); // 阻塞，只有当保持连接失败时，才会执行下面的操作，失败时，status值为BREATHE_ERROR或者BREATHE_TIMEOUT
 				if (status != Status.ONLINE) { // 保持在线失败，请求下线
