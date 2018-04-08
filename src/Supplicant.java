@@ -284,7 +284,7 @@ public class Supplicant {
 			DHCP_SETTING = "0";
 		}
 		System.out.print("小蝴蝶版本号：([3.8.2])");
-		line = in.next().trim();
+		line = in.nextLine().trim();
 		if (isNullOrBlank(line)) {
 			CLIENT_VERSION = "3.8.2";
 		} else {
