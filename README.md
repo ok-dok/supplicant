@@ -81,8 +81,9 @@ java Supplicant -i
 当然你也可以自己修改配置文件，修改配置信息。<br>
 注意：自动获取本地网卡信息会读取电脑有线网卡的mac、ip，拨号认证前，请将网卡设置为自动获取（适用于dhcp自动获取）,如果校园网不支持dhcp，请自行修改网卡ipv4地址、网关、DNS等信息。如果电脑存在多张有线物理网卡，导致无法正确获取网卡信息，请修改配置文件的mac_addr和local_ip两项内容或者使用-i参数手动输入配置信息。<br>
 
-## Bug Report
-Email: shawn_hou@163.com
+## 问题交流
+
+QQ群：`623929715`
 
 ## 特别感谢
 感谢 [xingrz](https://github.com/xingrz/swiftz-protocal "xingrz/swiftz-protocal") 提供的协议。
