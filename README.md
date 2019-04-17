@@ -33,7 +33,7 @@ java Supplicant -i
 `不支持` PPPOE、Web认证
 
 ## 使用说明
-1. 需要依赖java运行环境，jre或jdk1.7版本以上，同时配置环境变量，windows系统可直接安装exe安装包，无需手动配置环境变量，Linux或Mac请下载jdk，并配置环境变量，百度上教程很多，不会的就百度吧。这里附上jre下载地址：http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html<br>
+1. 需要依赖java运行环境，jre或jdk1.7版本以上，同时配置环境变量，windows系统可直接安装exe安装包，无需手动配置环境变量，Linux或Mac请下载jdk，并配置环境变量，百度上教程很多，不会的就百度吧。这里附上jre下载地址：https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html<br>
 2. 直接使用编译文件，复制bin/目录下的两个.class文件到任意目录中，打开命令行，进入到该目录。<br>
 初次运行需要输入账户和密码，直接执行下面命令会提示输入账户、密码（只有第一次运行需要输入，**密码输入时是看不到的哦**）：
  ```
